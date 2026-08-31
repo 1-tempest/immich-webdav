@@ -150,7 +150,7 @@ services:
     volumes:
       - immich-webdav-cache:/cache
     ports:
-      - "1700:1700"   # drop this if your reverse proxy is on the same Docker network
+      - "1700:1700"
 
 volumes:
   immich-webdav-cache:
@@ -169,22 +169,19 @@ Caddy are fine by default; nginx needs `proxy_http_version 1.1;` and
 
 `/cache/asset-sizes.json` holds the per-asset byte sizes the gateway learns by
 probing Immich (needed so `rclone --vfs-cache-mode full` gets correct sizes).
-It works with or without a volume:
+The Compose example above mounts a named volume for it. Alternatives:
 
-- **No volume:** the file lives in the container layer. Survives
-  `docker restart` / `docker compose restart`. Lost when the container is
-  *recreated* (image upgrade, `docker rm`, `compose down`) — the gateway then
-  re-probes each album's sizes on its first browse (~a few hundred ms per
-  album, once, then cached ~2 weeks).
-- **Named volume** (`-v immich-webdav-cache:/cache`): survives recreation,
-  ownership handled automatically.
-- **Bind mount** (`-v ./cache:/cache`): survives recreation, but the container
-  runs as uid `10001`, so the host directory must be writable by it:
+- **Bind mount:** replace the service's volume line with `- ./cache:/cache`
+  and drop the top-level `volumes:` block. The container runs as uid `10001`,
+  so create the host directory writable by it first:
   ```bash
   mkdir -p ./cache && sudo chown 10001:10001 ./cache
   ```
-  Without that the gateway logs a warning and falls back to in-memory (still
-  works, just doesn't persist).
+  Without that, the gateway logs a warning and falls back to in-memory.
+- **No volume:** remove both `volumes:` blocks. The file then lives in the
+  container layer — kept across `compose restart`, lost on `compose down` or
+  an image upgrade, after which the gateway re-probes each album's sizes on
+  its first browse (~a few hundred ms per album, once, then cached ~2 weeks).
 
 Only asset sizes are persisted — the album/asset listing caches are in-memory
 only, since listings must reflect current Immich state, not a stale snapshot.
