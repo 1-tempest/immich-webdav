@@ -4,23 +4,22 @@
     "config:recommended",
     "helpers:pinGitHubActionDigests"
   ],
-  "schedule": ["before 6am on monday"],
   "pinDigests": true,
+  "minimumReleaseAge": "3 days",
   "packageRules": [
     {
-      "description": "Auto-merge minor, patch and digest updates once CI is green",
-      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "description": "Auto-merge anything that passes CI (docker build + boot smoke test)",
       "automerge": true
     },
     {
-      "description": "Major updates: open a PR for review, never auto-merge",
+      "description": "Runtime deps and the Python base image: major bumps open a PR to review",
+      "matchManagers": ["pep621", "dockerfile"],
       "matchUpdateTypes": ["major"],
       "automerge": false
     },
     {
       "groupName": "python dependencies",
-      "matchManagers": ["pep621"],
-      "rangeStrategy": "pin"
+      "matchManagers": ["pep621"]
     },
     {
       "groupName": "docker base image",
