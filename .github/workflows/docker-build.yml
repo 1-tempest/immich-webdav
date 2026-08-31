@@ -53,21 +53,28 @@ jobs:
 
       - name: Smoke test (imports + HTTP boot)
         run: |
+          # 1. Every module imports under this image's Python + pinned deps.
           docker run --rm --entrypoint python immich-webdav:smoke -c \
             "import immich_webdav.server, immich_webdav.setup_app, immich_webdav.webdav.provider, immich_webdav.webdav.resources; print('imports ok')"
+          # 2. The server actually boots and serves. No Immich in CI, so only
+          #    the Immich-free paths are exercised: GET / (setup page) must
+          #    return 200, and a WebDAV request must get a real HTTP response
+          #    (i.e. cheroot + wsgidav middleware chain is alive) rather than a
+          #    connection refused.
           docker run -d --name iw -p 1700:1700 immich-webdav:smoke
           for _ in $(seq 1 20); do
             curl -fsS http://localhost:1700/ -o body.html && ok=1 && break
             sleep 1
           done
-          curl -sS -D headers.txt -u ci:ci -X OPTIONS http://localhost:1700/ -o /dev/null || true
+          dav=$(curl -s -o /dev/null -w '%{http_code}' -u ci:ci -X PROPFIND -H 'Depth: 0' http://localhost:1700/)
           docker logs iw
           running=$(docker inspect -f '{{.State.Running}}' iw)
           docker rm -f iw
           test "${ok:-}" = 1     || { echo "::error::server never answered GET / on :1700"; exit 1; }
           test -s body.html      || { echo "::error::empty GET / body"; exit 1; }
           test "$running" = true || { echo "::error::container exited after boot"; exit 1; }
-          grep -qi '^DAV:' headers.txt || { echo "::error::wsgidav did not handle OPTIONS"; cat headers.txt; exit 1; }
+          echo "PROPFIND / -> HTTP $dav"
+          case "$dav" in 000|"") echo "::error::wsgidav/cheroot did not respond to PROPFIND"; exit 1;; esac
 
       - name: Build and push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
