@@ -1,0 +1,22 @@
+[project]
+name = "immich-webdav"
+version = "0.1.0"
+description = "Read-only, per-user WebDAV gateway exposing Immich albums, authenticated via user-scoped Immich API keys"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "wsgidav>=4.3,<5",
+    "cheroot>=10,<11",
+    "requests>=2.32,<3",
+    "python-dateutil>=2.9,<3",
+]
+
+[project.scripts]
+immich-webdav = "immich_webdav.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
