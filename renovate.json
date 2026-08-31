@@ -1,11 +1,26 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
   "schedule": ["before 6am on monday"],
+  "pinDigests": true,
   "packageRules": [
     {
+      "description": "Auto-merge minor, patch and digest updates once CI is green",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "automerge": true
+    },
+    {
+      "description": "Major updates: open a PR for review, never auto-merge",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
       "groupName": "python dependencies",
-      "matchManagers": ["pep621", "pip_requirements", "pip_setup"]
+      "matchManagers": ["pep621"],
+      "rangeStrategy": "pin"
     },
     {
       "groupName": "docker base image",
