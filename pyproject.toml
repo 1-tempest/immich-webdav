@@ -8,7 +8,7 @@ dependencies = [
     "wsgidav>=4.3,<5",
     "cheroot>=11,<12",
     "requests>=2.32,<3",
-    "python-dateutil>=2.9,<3",
+    "python-dateutil>=3,<4",
 ]
 
 [project.scripts]
