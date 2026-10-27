@@ -9,6 +9,7 @@
   "packageRules": [
     {
       "description": "Auto-merge anything that passes CI (docker build + boot smoke test)",
+      "matchPackageNames": ["*"],
       "automerge": true
     },
     {
